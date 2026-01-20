@@ -8,38 +8,38 @@ router.post('/signup', async (req, res) => {
   try {
     const { name, age, address, aadharCardNumber, password } = req.body;
 
-    // STRICT VALIDATION
     if (!name || !age || !address || !aadharCardNumber || !password) {
       return res.status(400).json({ error: 'All fields are required' });
     }
 
     if (!/^\d{12}$/.test(aadharCardNumber)) {
-      return res.status(400).json({ error: 'Aadhar Card Number must be exactly 12 digits' });
+      return res.status(400).json({ error: 'Aadhar must be exactly 12 digits' });
     }
 
-    const existingUser = await User.findOne({ aadharCardNumber });
-    if (existingUser) {
+    const exists = await User.findOne({ aadharCardNumber });
+    if (exists) {
       return res.status(400).json({ error: 'User already exists' });
     }
 
-    //  NEVER trust role from frontend
-    const newUser = new User({
-      name: name.trim(),
-      age: Number(age),
-      address: address.trim(),
+    const user = new User({
+      name,
+      age,
+      address,
       aadharCardNumber,
       password,
-      role: 'voter' 
+      role: 'voter',     
+      isVoted: false
     });
 
-    await newUser.save();
+    await user.save();
+    res.status(201).json({ message: "Signup successful" });
 
-    res.status(201).json({ message: 'Signup successful' });
   } catch (err) {
-    console.error('SIGNUP ERROR:', err);
-    res.status(500).json({ error: 'Internal Server Error' });
+    console.error(err);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
+
 
 //   USER LOGIN  
 router.post('/login', async (req, res) => {

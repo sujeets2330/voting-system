@@ -2,25 +2,41 @@ const API = "http://localhost:3000";
 const token = localStorage.getItem("token");
 const path = window.location.pathname;
 
-// LOGOUT 
+/* ================= LOGOUT ================= */
 function logout() {
   localStorage.clear();
   window.location.href = "/";
 }
 
-// SIGNUP  
+/* ================= SIGNUP ================= */
 document.getElementById("signupForm")?.addEventListener("submit", async (e) => {
   e.preventDefault();
 
+  const nameInput = document.getElementById("name");
+  const ageInput = document.getElementById("age");
+  const addressInput = document.getElementById("address");
+  const aadharInput = document.getElementById("aadhar");
+  const passwordInput = document.getElementById("password");
+
+  if (!nameInput || !ageInput || !addressInput || !aadharInput || !passwordInput) {
+    return alert("Signup form inputs missing");
+  }
+
   const payload = {
-    name: name.value.trim(),
-    age: Number(age.value),
-    address: address.value.trim(),
-    aadharCardNumber: aadhar.value.trim(),
-    password: password.value
+    name: nameInput.value.trim(),
+    age: Number(ageInput.value),
+    address: addressInput.value.trim(),
+    aadharCardNumber: aadharInput.value.trim(),
+    password: passwordInput.value
   };
 
-  if (!payload.name || !payload.age || !payload.address || !payload.aadharCardNumber || !payload.password) {
+  if (
+    !payload.name ||
+    !payload.age ||
+    !payload.address ||
+    !payload.aadharCardNumber ||
+    !payload.password
+  ) {
     return alert("All fields are required");
   }
 
@@ -41,16 +57,23 @@ document.getElementById("signupForm")?.addEventListener("submit", async (e) => {
   window.location.href = "/user-login";
 });
 
-// LOGIN (USER + ADMIN)  
+/* ================= LOGIN (USER + ADMIN) ================= */
 document.getElementById("userLoginForm")?.addEventListener("submit", async (e) => {
   e.preventDefault();
+
+  const aadharInput = document.getElementById("aadhar");
+  const passwordInput = document.getElementById("password");
+
+  if (!aadharInput || !passwordInput) {
+    return alert("Login form inputs missing");
+  }
 
   const res = await fetch(`${API}/user/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      aadharCardNumber: aadhar.value.trim(),
-      password: password.value
+      aadharCardNumber: aadharInput.value.trim(),
+      password: passwordInput.value
     })
   });
 
@@ -59,7 +82,6 @@ document.getElementById("userLoginForm")?.addEventListener("submit", async (e) =
 
   localStorage.setItem("token", data.token);
 
-  // ROLE BASED REDIRECT
   if (data.role === "admin") {
     window.location.href = "/admin-dashboard";
   } else {
@@ -67,7 +89,7 @@ document.getElementById("userLoginForm")?.addEventListener("submit", async (e) =
   }
 });
 
-// USER DASHBOARD  
+/* ================= USER DASHBOARD ================= */
 async function loadCandidatesForUser() {
   const container = document.getElementById("candidateList");
   if (!container) return;
@@ -104,7 +126,7 @@ async function vote(candidateId, btn) {
   loadVoteResults();
 }
 
-// LIVE VOTE RESULTS (USER + ADMIN) 
+/* ================= LIVE VOTE RESULTS ================= */
 async function loadVoteResults() {
   const div = document.getElementById("results");
   if (!div) return;
@@ -112,7 +134,7 @@ async function loadVoteResults() {
   div.innerHTML = "";
 
   const res = await fetch(`${API}/candidate/vote/count`);
-  if (!res.ok) return div.innerHTML = "<p>No results yet</p>";
+  if (!res.ok) return (div.innerHTML = "<p>No results yet</p>");
 
   const data = await res.json();
   data.forEach(r => {
@@ -120,7 +142,7 @@ async function loadVoteResults() {
   });
 }
 
-//  ADMIN DASHBOARD  
+/* ================= ADMIN DASHBOARD ================= */
 async function loadAdminStats() {
   const totalEl = document.getElementById("totalUsers");
   const votedEl = document.getElementById("votedUsers");
@@ -169,7 +191,7 @@ async function updateCandidate(id) {
     body: JSON.stringify({
       name: document.getElementById(`name-${id}`).value,
       party: document.getElementById(`party-${id}`).value,
-      age: document.getElementById(`age-${id}`).value
+      age: Number(document.getElementById(`age-${id}`).value)
     })
   });
 
@@ -186,9 +208,15 @@ async function deleteCandidate(id) {
   loadAdminCandidates();
 }
 
-// ADD CANDIDATE  
+/* ================= ADD CANDIDATE ================= */
 document.getElementById("addCandidateForm")?.addEventListener("submit", async (e) => {
   e.preventDefault();
+
+  const cname = document.getElementById("cname");
+  const party = document.getElementById("party");
+  const age = document.getElementById("age");
+
+  if (!cname || !party || !age) return alert("Candidate form inputs missing");
 
   const payload = {
     name: cname.value.trim(),
@@ -212,7 +240,7 @@ document.getElementById("addCandidateForm")?.addEventListener("submit", async (e
   loadVoteResults();
 });
 
-// PAGE INIT  
+/* ================= PAGE INIT ================= */
 if (path.includes("user-dashboard")) {
   loadCandidatesForUser();
   loadVoteResults();
