@@ -6,37 +6,37 @@
 </head>
 <body class="page-center">
 
-  <div class="card wide">
-    <h2>Admin Dashboard</h2>
+<div class="card wide">
+  <h2>Admin Dashboard</h2>
 
-    <div class="stats">
-      <p>Total Registered Users: <span id="totalUsers">0</span></p>
-      <p>Total Voted Users: <span id="votedUsers">0</span></p>
-    </div>
-
-    <hr>
-
-    <h3>Add Candidate</h3>
-    <form id="addCandidateForm" class="form-inline">
-      <input id="cname" placeholder="Candidate Name" required>
-      <input id="party" placeholder="Party" required>
-      <input id="age" type="number" placeholder="Age" required>
-      <button class="btn primary">Add</button>
-    </form>
-
-    <hr>
-
-    <h3>All Candidates</h3>
-    <div id="adminCandidates" class="list"></div>
-
-    <hr>
-
-    <h3>Live Vote Results</h3>
-    <div id="results" class="list"></div>
-
-    <button onclick="logout()" class="btn danger">Logout</button>
+  <div class="stats">
+    <p>Total Registered Users: <span id="totalUsers">0</span></p>
+    <p>Total Voted Users: <span id="votedUsers">0</span></p>
   </div>
 
-  <script src="/js/main.js"></script>
+  <hr>
+
+  <h3>Add Candidate</h3>
+  <form id="addCandidateForm" class="form-inline">
+    <input id="cname" placeholder="Candidate Name" required>
+    <input id="party" placeholder="Party" required>
+    <input id="age" type="number" placeholder="Age" required>
+    <button>Add</button>
+  </form>
+
+  <hr>
+
+  <h3>All Candidates</h3>
+  <div id="adminCandidates"></div>
+
+  <hr>
+
+  <h3>Live Vote Results</h3>
+  <div id="results"></div>
+
+  <button onclick="logout()" class="btn danger">Logout</button>
+</div>
+
+<script src="/js/main.js"></script>
 </body>
 </html>

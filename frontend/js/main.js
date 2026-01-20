@@ -2,32 +2,30 @@ const API = "http://localhost:3000";
 const token = localStorage.getItem("token");
 const path = window.location.pathname;
 
-//   LOGOUT  
+// LOGOUT 
 function logout() {
   localStorage.clear();
   window.location.href = "/";
 }
 
-//   USER SIGNUP  
+// SIGNUP  
 document.getElementById("signupForm")?.addEventListener("submit", async (e) => {
   e.preventDefault();
 
   const payload = {
-    name: document.getElementById("name").value.trim(),
-    age: Number(document.getElementById("age").value),
-    address: document.getElementById("address").value.trim(),
-    aadharCardNumber: document.getElementById("aadhar").value.trim(),
-    password: document.getElementById("password").value
+    name: name.value.trim(),
+    age: Number(age.value),
+    address: address.value.trim(),
+    aadharCardNumber: aadhar.value.trim(),
+    password: password.value
   };
 
   if (!payload.name || !payload.age || !payload.address || !payload.aadharCardNumber || !payload.password) {
-    alert("All fields are required");
-    return;
+    return alert("All fields are required");
   }
 
   if (!/^\d{12}$/.test(payload.aadharCardNumber)) {
-    alert("Aadhar must be exactly 12 digits");
-    return;
+    return alert("Aadhar must be exactly 12 digits");
   }
 
   const res = await fetch(`${API}/user/signup`, {
@@ -37,16 +35,13 @@ document.getElementById("signupForm")?.addEventListener("submit", async (e) => {
   });
 
   const data = await res.json();
-  if (!res.ok) {
-    alert(data.error || "Signup failed");
-    return;
-  }
+  if (!res.ok) return alert(data.error || "Signup failed");
 
   alert("Signup successful. Please login.");
   window.location.href = "/user-login";
 });
 
-//   LOGIN (USER + ADMIN SAME FORM)  
+// LOGIN (USER + ADMIN)  
 document.getElementById("userLoginForm")?.addEventListener("submit", async (e) => {
   e.preventDefault();
 
@@ -54,20 +49,17 @@ document.getElementById("userLoginForm")?.addEventListener("submit", async (e) =
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      aadharCardNumber: document.getElementById("aadhar").value.trim(),
-      password: document.getElementById("password").value
+      aadharCardNumber: aadhar.value.trim(),
+      password: password.value
     })
   });
 
   const data = await res.json();
-  if (!res.ok) {
-    alert(data.error || "Login failed");
-    return;
-  }
+  if (!res.ok) return alert(data.error || "Login failed");
 
   localStorage.setItem("token", data.token);
 
-  //  ROLE BASED REDIRECT
+  // ROLE BASED REDIRECT
   if (data.role === "admin") {
     window.location.href = "/admin-dashboard";
   } else {
@@ -75,50 +67,60 @@ document.getElementById("userLoginForm")?.addEventListener("submit", async (e) =
   }
 });
 
-//   USER DASHBOARD  
+// USER DASHBOARD  
 async function loadCandidatesForUser() {
-  const div = document.getElementById("candidateList");
-  if (!div) return;
+  const container = document.getElementById("candidateList");
+  if (!container) return;
 
-  div.innerHTML = "";
+  container.innerHTML = "";
 
   const res = await fetch(`${API}/candidate`);
   const candidates = await res.json();
 
   candidates.forEach(c => {
-    div.innerHTML += `
-      <p>
+    container.innerHTML += `
+      <div class="row">
         <b>${c.name}</b> (${c.party})
         <button onclick="vote('${c._id}', this)">Vote</button>
-      </p>
+      </div>
     `;
   });
 }
 
 async function vote(candidateId, btn) {
-  if (!token) {
-    alert("Login required");
-    return;
-  }
+  if (!token) return alert("Login required");
 
   const res = await fetch(`${API}/candidate/vote/${candidateId}`, {
     headers: { Authorization: "Bearer " + token }
   });
 
   const data = await res.json();
-  if (!res.ok) {
-    alert(data.message || "Voting failed");
-    return;
-  }
+  if (!res.ok) return alert(data.message || "Voting failed");
 
   btn.disabled = true;
   btn.innerText = "Voted";
-  alert("Vote recorded successfully");
+  alert("Vote recorded");
 
-  loadVoteResults(); 
+  loadVoteResults();
 }
 
-//  ADMIN DASHBOARD 
+// LIVE VOTE RESULTS (USER + ADMIN) 
+async function loadVoteResults() {
+  const div = document.getElementById("results");
+  if (!div) return;
+
+  div.innerHTML = "";
+
+  const res = await fetch(`${API}/candidate/vote/count`);
+  if (!res.ok) return div.innerHTML = "<p>No results yet</p>";
+
+  const data = await res.json();
+  data.forEach(r => {
+    div.innerHTML += `<p>${r.party}: ${r.count}</p>`;
+  });
+}
+
+//  ADMIN DASHBOARD  
 async function loadAdminStats() {
   const totalEl = document.getElementById("totalUsers");
   const votedEl = document.getElementById("votedUsers");
@@ -136,51 +138,62 @@ async function loadAdminStats() {
 }
 
 async function loadAdminCandidates() {
-  const div = document.getElementById("adminCandidates");
-  if (!div) return;
+  const container = document.getElementById("adminCandidates");
+  if (!container) return;
 
-  div.innerHTML = "";
+  container.innerHTML = "";
 
   const res = await fetch(`${API}/candidate`);
   const candidates = await res.json();
 
   candidates.forEach(c => {
-    div.innerHTML += `<p>${c.name} (${c.party})</p>`;
+    container.innerHTML += `
+      <div class="row">
+        <input id="name-${c._id}" value="${c.name}">
+        <input id="party-${c._id}" value="${c.party}">
+        <input id="age-${c._id}" type="number" value="${c.age}">
+        <button onclick="updateCandidate('${c._id}')">Update</button>
+        <button onclick="deleteCandidate('${c._id}')">Delete</button>
+      </div>
+    `;
   });
 }
 
-//  LIVE VOTE RESULTS (USER + ADMIN) 
-async function loadVoteResults() {
-  const div = document.getElementById("results");
-  if (!div) return;
-
-  div.innerHTML = "";
-
-  const res = await fetch(`${API}/candidate/vote/count`);
-  if (!res.ok) {
-    div.innerHTML = "<p>Unable to load vote results</p>";
-    return;
-  }
-
-  const data = await res.json();
-  data.forEach(r => {
-    div.innerHTML += `<p>${r.party}: ${r.count}</p>`;
+async function updateCandidate(id) {
+  await fetch(`${API}/candidate/${id}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Bearer " + token
+    },
+    body: JSON.stringify({
+      name: document.getElementById(`name-${id}`).value,
+      party: document.getElementById(`party-${id}`).value,
+      age: document.getElementById(`age-${id}`).value
+    })
   });
+
+  alert("Candidate updated");
 }
 
-//  ADD CANDIDATE (ADMIN) 
+async function deleteCandidate(id) {
+  await fetch(`${API}/candidate/${id}`, {
+    method: "DELETE",
+    headers: { Authorization: "Bearer " + token }
+  });
+
+  alert("Candidate deleted");
+  loadAdminCandidates();
+}
+
+// ADD CANDIDATE  
 document.getElementById("addCandidateForm")?.addEventListener("submit", async (e) => {
   e.preventDefault();
 
-  if (!token) {
-    alert("Unauthorized");
-    return;
-  }
-
   const payload = {
-    name: document.getElementById("cname").value.trim(),
-    party: document.getElementById("party").value.trim(),
-    age: Number(document.getElementById("age").value)
+    name: cname.value.trim(),
+    party: party.value.trim(),
+    age: Number(age.value)
   };
 
   const res = await fetch(`${API}/candidate`, {
@@ -192,21 +205,17 @@ document.getElementById("addCandidateForm")?.addEventListener("submit", async (e
     body: JSON.stringify(payload)
   });
 
-  const data = await res.json();
-  if (!res.ok) {
-    alert(data.message || "Failed to add candidate");
-    return;
-  }
+  if (!res.ok) return alert("Failed to add candidate");
 
-  alert("Candidate added successfully");
+  alert("Candidate added");
   loadAdminCandidates();
   loadVoteResults();
 });
 
-//  PAGE INIT 
+// PAGE INIT  
 if (path.includes("user-dashboard")) {
   loadCandidatesForUser();
-  loadVoteResults(); 
+  loadVoteResults();
 }
 
 if (path.includes("admin-dashboard")) {
